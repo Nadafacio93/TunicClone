@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,6 +16,13 @@ public class PlayerController : MonoBehaviour
     [Header("Animação")]
     private Animator anim;
     public bool isWalk;
+
+    [Header("Cameras")]
+    [SerializeField] private GameObject playerCamera;
+
+    [Header("Particulas")]
+    [SerializeField] private ParticleSystem fxAttack;
+    private bool isAttacking;
 
     private void Start()
     {
@@ -69,5 +77,27 @@ public class PlayerController : MonoBehaviour
     private void AtaquePlayer()
     {
         anim.SetTrigger("triggerAttack");
+        fxAttack.Emit(1);
+        isAttacking = true;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        switch (other.gameObject.tag)
+        {
+            case "CamTrigger":
+                playerCamera.SetActive(true);
+                break;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        switch (other.gameObject.tag)
+        {
+            case "CamTrigger":
+                playerCamera.SetActive(false);
+                break;
+        }
     }
 }
