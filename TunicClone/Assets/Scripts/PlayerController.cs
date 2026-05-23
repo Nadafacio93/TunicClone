@@ -1,4 +1,4 @@
-using Unity.VisualScripting;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,6 +23,14 @@ public class PlayerController : MonoBehaviour
     [Header("Particulas")]
     [SerializeField] private ParticleSystem fxAttack;
     private bool isAttacking;
+
+    [Header("Attack")]
+    public Transform hitBox;
+    [UnityEngine.Range(0.2f, 1f)]
+    public float hitRange = 0.3f;
+    [SerializeField] private LayerMask hitLayer;
+    [SerializeField] private Collider[] hitInfo;
+    public int amountDmg;
 
     private void Start()
     {
@@ -76,9 +84,19 @@ public class PlayerController : MonoBehaviour
 
     private void AtaquePlayer()
     {
-        anim.SetTrigger("triggerAttack");
-        fxAttack.Emit(1);
-        isAttacking = true;
+        if (!isAttacking)
+        {
+            anim.SetTrigger("triggerAttack");
+            fxAttack.Emit(1);
+            isAttacking = true;
+
+            hitInfo = Physics.OverlapSphere(hitBox.position, hitRange, hitLayer);
+
+            foreach (Collider hit in hitInfo)
+            {
+                hit.gameObject.SendMessage("GetHit", amountDmg, SendMessageOptions.DontRequireReceiver);
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -99,5 +117,16 @@ public class PlayerController : MonoBehaviour
                 playerCamera.SetActive(false);
                 break;
         }
+    }
+
+    public void AttackIsDone()
+    {
+        isAttacking = false;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.orange;
+        Gizmos.DrawWireSphere(hitBox.position, hitRange);
     }
 }
