@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,7 +12,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private Vector3 velocity;
 
-    [Header("AnimaÃ§Ã£o")]
+    [Header("Animação")]
     private Animator anim;
     public bool isWalk;
 
@@ -21,16 +20,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject playerCamera;
 
     [Header("Particulas")]
-    [SerializeField] private ParticleSystem fxAttack;
+    [SerializeField] private ParticleSystem fxAtack;
     private bool isAttacking;
 
     [Header("Attack")]
     public Transform hitBox;
-    [UnityEngine.Range(0.2f, 1f)]
-    public float hitRange = 0.3f;
+    [Range(0.2f, 1f)]//Barra Deslizante
+    public float hitRange = 0.5f;
     [SerializeField] private LayerMask hitLayer;
     [SerializeField] private Collider[] hitInfo;
-    public int amountDmg;
+    public int amountDmg = 25;//Aqui
+
+    [Header("Dano")]
+    public int hp = 100;
+    private bool isDie = false;
 
     private void Start()
     {
@@ -46,8 +49,8 @@ public class PlayerController : MonoBehaviour
     public void OnAttack()
     {
         AtaquePlayer();
-
     }
+
     private void Update()
     {
         MovimentacaoPlayer();
@@ -55,57 +58,79 @@ public class PlayerController : MonoBehaviour
 
     private void MovimentacaoPlayer()
     {
-        Vector3 direction = new Vector3(moveInput.x, 0, moveInput.y);
+        //Pega  os eixos X e Z
+        Vector3 direction =
+            new Vector3(moveInput.x, 0, moveInput.y);
+
 
         if (direction.magnitude > 0.1f)
         {
+
             isWalk = true;
 
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;//Calcula o angulo baseado na direÃ§Ã£o
-            Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);//Suaviza a rotaÃ§Ã£o
+            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;//Ele Calcula o angulo baseado na direção
+            Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);//Suaviza a rotação
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);//Personagem rotaciona baseado na movimentaÃ§Ã£o
+            //Personagem Rotacione baseado na movimentação
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                Time.deltaTime * 10f);
         }
         else
         {
             isWalk = false;
         }
 
-        controller.Move(direction * speedMovement * Time.deltaTime);
-        if(controller.isGrounded && velocity.y < 0)
+
+        controller.Move(
+            direction *
+            speedMovement *
+            Time.deltaTime);
+
+        if (controller.isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
         }
+
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
         anim.SetBool("isWalk", isWalk);
+
     }
 
     private void AtaquePlayer()
     {
         if (!isAttacking)
         {
-            anim.SetTrigger("triggerAttack");
-            fxAttack.Emit(1);
+            anim.SetTrigger("triggerAtack");
+            fxAtack.Emit(1);
             isAttacking = true;
 
-            hitInfo = Physics.OverlapSphere(hitBox.position, hitRange, hitLayer);
+            hitInfo = Physics.OverlapSphere
+                (hitBox.position, hitRange, hitLayer);
 
             foreach (Collider hit in hitInfo)
             {
-                hit.gameObject.SendMessage("GetHit", amountDmg, SendMessageOptions.DontRequireReceiver);
+                
+                hit.gameObject.SendMessage
+                    ("GetHit", amountDmg, SendMessageOptions.DontRequireReceiver);
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        switch (other.gameObject.tag)
+        switch(other.gameObject.tag)
         {
             case "CamTrigger":
                 playerCamera.SetActive(true);
                 break;
+        }
+        if (other.gameObject.CompareTag("TakeDamage"))
+        {
+            GetHit(10);
         }
     }
 
@@ -119,14 +144,30 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void AttackIsDone()
+    public void AtackIsDone()
     {
         isAttacking = false;
     }
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.orange;
+        Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(hitBox.position, hitRange);
+    }
+
+    public void GetHit(int amount)
+    {
+        if (isDie) return;
+        hp = hp - amount;
+
+        if (hp > 0)
+        {
+            anim.SetTrigger("Hit");
+        }
+        else
+        {
+            anim.SetTrigger("Die");
+            isDie = true;
+        }
     }
 }

@@ -3,14 +3,14 @@ using UnityEngine;
 public class Grass : MonoBehaviour
 {
     public ParticleSystem fxHit;
-    private bool isCut = false;
+    public bool isCut = false;
 
     public void GetHit()
     {
         if (isCut) return;
 
-        transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+        transform.localScale = new Vector3(0.3f,0.3f, 0.3f); 
         isCut = true;
-        fxHit.Emit(Random.Range(5, 10));
+        fxHit.Emit(Random.Range(5,10));
     }
 }
